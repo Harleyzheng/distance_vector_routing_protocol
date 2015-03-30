@@ -63,16 +63,18 @@ void listenForNeighbors()
 			exit(1);
 		}
 		
-		inet_ntop(AF_INET, &theirAddr.sin_addr, fromAddr, 100);
+		inet_ntop(AF_INET, &theirAddr.sin_addr, fromAddr, 100);  //This function converts the network address structure sin_addr into a character string fromaddr
 		
 		short int heardFrom = -1;
-		if(strstr(fromAddr, "10.1.1."))
+		if(strstr(fromAddr, "10.1.1."))  //Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
 		{
-			heardFrom = atoi(
-					strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1);
+			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1); //Assign it to be node number
 			
 			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
 			
+
+
+
 			//record that we heard from heardFrom just now.
 			gettimeofday(&globalLastHeartbeat[heardFrom], 0);
 		}
