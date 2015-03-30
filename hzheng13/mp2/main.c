@@ -17,9 +17,19 @@ struct timeval globalLastHeartbeat[256];
 //our all-purpose UDP socket, to be bound to 10.1.1.globalMyID, port 7777
 int globalSocketUDP;
 //pre-filled for sending to 10.1.1.0 - 255, port 7777
-struct sockaddr_in globalNodeAddrs[256];
+struct sockaddr_in globalNodeAddrs[256];  
+//structures for handling internet addresses
+/*
+struct sockaddr_in {
+    short            sin_family;   // e.g. AF_INET
+    unsigned short   sin_port;     // e.g. htons(3490)
+    struct in_addr   sin_addr;     // see struct in_addr, below
+    char             sin_zero[8];  // zero this if you want to
+};
+*/
+int costs[256];
 
- 
+
 int main(int argc, char** argv)
 {
 	if(argc != 4)
@@ -37,18 +47,35 @@ int main(int argc, char** argv)
 	{
 		gettimeofday(&globalLastHeartbeat[i], 0);
 		
-		char tempaddr[100];
-		sprintf(tempaddr, "10.1.1.%d", i);
+		char tempaddr[100];    
+		sprintf(tempaddr, "10.1.1.%d", i);  	//send formatted 10.1.1.x to tempaddr
 		memset(&globalNodeAddrs[i], 0, sizeof(globalNodeAddrs[i]));
-		globalNodeAddrs[i].sin_family = AF_INET;
-		globalNodeAddrs[i].sin_port = htons(7777);
-		inet_pton(AF_INET, tempaddr, &globalNodeAddrs[i].sin_addr);
+		globalNodeAddrs[i].sin_family = AF_INET;   //address family that has been used everywhere
+		globalNodeAddrs[i].sin_port = htons(7777);  //from host byte order to network byte order
+		inet_pton(AF_INET, tempaddr, &globalNodeAddrs[i].sin_addr);  //load sin_addr
 	}
 	
 	
 	//TODO: read and parse initial costs file. default to cost 1 if no entry for a node. file may be empty.
-	
-	
+	for(int i = 0; i < 256; i++) {
+		costs[i] = 1;
+	}
+
+	FILE* file = fopen("costs.txt", "r");
+  	int i;
+  	int sth;
+
+  	while (!feof(file)){  
+      fscanf(file, "%d", &i);   
+      fscanf(file, "%d", &sth);  
+      costs[i] = sth; 
+    }
+
+  	fclose(file);    
+
+
+
+
 	//socket() and bind() our socket. We will do all sendto()ing and recvfrom()ing on this one.
 	if((globalSocketUDP=socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
