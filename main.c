@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-
-#include "monitor_neighbors.h"
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 
 void listenForNeighbors();
@@ -63,7 +69,6 @@ int main(int argc, char** argv)
 	costs[globalMyID] = 0;
 
 	FILE* file = fopen("costs.txt", "r");
-  	int i;
   	int sth;
 
   	while (!feof(file)){  
@@ -92,7 +97,7 @@ int main(int argc, char** argv)
 	inet_pton(AF_INET, myAddr, &bindAddr.sin_addr); //This function converts the character string myaddr into a network address structure sin_addr
 	if(bind(globalSocketUDP, (struct sockaddr*)&bindAddr, sizeof(struct sockaddr_in)) < 0)
 	{
-		perror("bind");
+		perror("bindjhjhj");
 		close(globalSocketUDP);
 		exit(1);
 	}
