@@ -91,6 +91,7 @@ int main(int argc, char** argv)
 	char myAddr[100];
 	struct sockaddr_in bindAddr;
 	sprintf(myAddr, "10.1.1.%d", globalMyID);	
+	printf("myaddr is%s\n",myAddr);
 	memset(&bindAddr, 0, sizeof(bindAddr));
 	bindAddr.sin_family = AF_INET;
 	bindAddr.sin_port = htons(7777);
