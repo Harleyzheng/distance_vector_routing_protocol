@@ -60,6 +60,7 @@ int main(int argc, char** argv)
 	for(int i = 0; i < 256; i++) {
 		costs[i] = 1;
 	}
+	costs[globalMyID] = 0;
 
 	FILE* file = fopen("costs.txt", "r");
   	int i;
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
 	memset(&bindAddr, 0, sizeof(bindAddr));
 	bindAddr.sin_family = AF_INET;
 	bindAddr.sin_port = htons(7777);
-	inet_pton(AF_INET, myAddr, &bindAddr.sin_addr);
+	inet_pton(AF_INET, myAddr, &bindAddr.sin_addr); //This function converts the character string myaddr into a network address structure sin_addr
 	if(bind(globalSocketUDP, (struct sockaddr*)&bindAddr, sizeof(struct sockaddr_in)) < 0)
 	{
 		perror("bind");
