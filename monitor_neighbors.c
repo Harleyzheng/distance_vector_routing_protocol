@@ -19,7 +19,7 @@ extern struct timeval globalLastHeartbeat[256];
 extern int globalSocketUDP;
 //pre-filled for sending to 10.1.1.0 - 255, port 7777
 extern struct sockaddr_in globalNodeAddrs[256];
-
+extern int costs[256];
 
 //Yes, this is terrible. It's also terrible that, in Linux, a socket
 //can't receive broadcast packets unless it's bound to INADDR_ANY,
@@ -45,6 +45,19 @@ void* announceToNeighbors(void* unusedParam)
 	}
 }
 
+int copy_string(char destination[], char source[]) {
+	int i = 0;
+
+	while (source[i] != '\0') {
+	  destination[i] = source[i];
+	  i++;
+	}
+	destination[i] = '\0';
+
+	return i;
+}
+
+
 void listenForNeighbors()
 {
 	char fromAddr[100];
@@ -55,6 +68,7 @@ void listenForNeighbors()
 	int bytesRecvd;
 	while(1)
 	{
+		memset(&recvBuf[0], 0, sizeof(recvBuf));
 		theirAddrLen = sizeof(theirAddr);
 		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 1000 , 0, 
 					(struct sockaddr*)&theirAddr, &theirAddrLen)) == -1)
@@ -72,7 +86,7 @@ void listenForNeighbors()
 			
 			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
 			
-
+	
 
 
 			//record that we heard from heardFrom just now.
@@ -84,18 +98,43 @@ void listenForNeighbors()
 		if(!strncmp(recvBuf, "send", 4))
 		{
 			//TODO send the requested message to the requested destination node
-			// ...
+			
+
+			printf("Send msg received\n");
+
+			short int destID = recvBuf[5];
+			char message[104];	
+			message[0] = 'm';	
+			message[1] = 's';
+			message[2] = 'g';	
+			int length = copy_string(&message[3],&recvBuf[6]);
+
+			printf("Cost msg received, destID is : %hd\n", destID);
+			printf("Cost msg received, msg is : %s\n", message);
+
+			
+			
+			sendto(globalSocketUDP, message, length+3, 0,
+				  (struct sockaddr*)&globalNodeAddrs[destID], sizeof(globalNodeAddrs[destID]));
+
+
+
 		}
 		//'cost'<4 ASCII bytes>, destID<net order 2 byte signed> newCost<net order 4 byte signed>
 		else if(!strncmp(recvBuf, "cost", 4))
 		{
-			char neighborid[3];
-			char tempcost[5];
-			strcpy(neighborid,recvBuf[4],2);
-			strcpy(tempcost,recvBuf[4],4);
 
-			costs[neighborid] = atoi(tempcost);
+			int recvcost;
+			memcpy(&recvcost,&recvBuf[6],4);
 
+			short int nid = recvBuf[5];
+			int newcost = ntohl(recvcost);
+		
+			//printf("Cost msg received, recvbuf is : %s\n", recvBuf);
+			printf("Cost msg received, neighborid is : %hd\n", nid);
+			printf("Cost msg received, newcost is : %d\n", newcost);
+
+			costs[nid] = newcost;
 
 			//TODO record the cost change (remember, the link might currently be down! in that case,
 			//this is the new cost you should treat it as having once it comes back up.)
@@ -103,8 +142,14 @@ void listenForNeighbors()
 		}
 		
 		//TODO now check for the various types of packets you use in your own protocol
-		//else if(!strncmp(recvBuf, "your other message types", ))
-		// ... 
+		else if(!strncmp(recvBuf, "msg", 3))
+		{
+			char recvmsg[101];	
+			copy_string(recvmsg,&recvBuf[3]);
+
+			printf("received msg is: %s\n",recvmsg);
+		}
+		  
 	}
 	//(should never reach here)
 	close(globalSocketUDP);
