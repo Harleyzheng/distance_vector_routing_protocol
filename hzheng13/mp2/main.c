@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 	
 	
 	//TODO: read and parse initial costs file. default to cost 1 if no entry for a node. file may be empty.
-	for(int i = 0; i < 256; i++) {
+	for(i = 0; i < 256; i++) {
 		costs[i] = 1;
 	}
 	costs[globalMyID] = 0;
@@ -72,10 +72,10 @@ int main(int argc, char** argv)
   	int sth;
 
   	while (!feof(file)){  
-      fscanf(file, "%d", &i);   
-      fscanf(file, "%d", &sth);  
-      costs[i] = sth; 
-    }
+		fscanf(file, "%d", &i);   
+		fscanf(file, "%d", &sth);  
+		costs[i] = sth; 
+	}
 
   	fclose(file);    
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	
 	
 	
-	
+	printf("reached\n");
 	//good luck, have fun!
 	listenForNeighbors();
 	
