@@ -89,6 +89,14 @@ void listenForNeighbors()
 		//'cost'<4 ASCII bytes>, destID<net order 2 byte signed> newCost<net order 4 byte signed>
 		else if(!strncmp(recvBuf, "cost", 4))
 		{
+			char neighborid[3];
+			char tempcost[5];
+			strcpy(neighborid,recvBuf[4],2);
+			strcpy(tempcost,recvBuf[4],4);
+
+			costs[neighborid] = atoi(tempcost);
+
+
 			//TODO record the cost change (remember, the link might currently be down! in that case,
 			//this is the new cost you should treat it as having once it comes back up.)
 			// ...
