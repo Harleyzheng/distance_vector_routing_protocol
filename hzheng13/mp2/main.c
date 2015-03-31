@@ -80,8 +80,6 @@ int main(int argc, char** argv)
   	fclose(file);    
 
 
-
-
 	//socket() and bind() our socket. We will do all sendto()ing and recvfrom()ing on this one.
 	if((globalSocketUDP=socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
@@ -110,7 +108,6 @@ int main(int argc, char** argv)
 	
 	
 	
-	printf("reached\n");
 	//good luck, have fun!
 	listenForNeighbors();
 	
