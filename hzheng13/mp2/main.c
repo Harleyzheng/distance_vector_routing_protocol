@@ -33,10 +33,11 @@ struct sockaddr_in {
     char             sin_zero[8];  // zero this if you want to
 };
 */
-uint32_t costs[256][256];
+uint32_t costs[256];
 uint32_t nexthops[256];
 uint32_t buf[512];
 uint32_t temp[512];
+uint32_t hops[512];
 FILE* logfile;
 
 int main(int argc, char** argv)
@@ -67,10 +68,10 @@ int main(int argc, char** argv)
 	
 	//TODO: read and parse initial costs file. default to cost 1 if no entry for a node. file may be empty.
 	for(i = 0; i < 256; i++) {
-		costs[globalMyID][i] = 1;
+		costs[i] = 1;
 		nexthops[i] = i;
 	}
-	costs[globalMyID][globalMyID] = 0;
+	costs[globalMyID] = 0;
 
 	FILE* costfile = fopen(argv[2], "r+");
 
@@ -80,7 +81,7 @@ int main(int argc, char** argv)
   	while (!feof(costfile)){  
 		fscanf(costfile, "%d", &i);   
 		fscanf(costfile, "%d", &sth);  
-		costs[globalMyID][i] = sth; 
+		costs[i] = sth; 
 	}
 	
 //	for(i=0;i<20;i++)
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
 	
 	
 	for(i=0;i<256;i++){
-		int no_ne = htonl(costs[globalMyID][i]);
+		int no_ne = htonl(costs[i]);
 		int hop = htonl(nexthops[i]);
 		buf[i] = no_ne;
 		buf[i+256] = hop;
@@ -125,7 +126,7 @@ int main(int argc, char** argv)
 
 	printf("test buff first: %d\n",buf[0]);	
 	printf("test buff second: %d\n",buf[1]);	
-	printf("test buff second: %d\n",buf[2]);
+	printf("test buff third: %d\n",buf[2]);
 
 
 

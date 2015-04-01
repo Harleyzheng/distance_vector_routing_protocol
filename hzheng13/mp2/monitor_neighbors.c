@@ -19,10 +19,11 @@ extern struct timeval globalLastHeartbeat[256];
 extern int globalSocketUDP;
 //pre-filled for sending to 10.1.1.0 - 255, port 7777
 extern struct sockaddr_in globalNodeAddrs[256];
-extern uint32_t costs[256][256];
+extern uint32_t costs[256];
 extern uint32_t nexthops[256];
 extern uint32_t buf[512];
-extern uint32_t temp[512];
+extern uint32_t temp[256];
+extern uint32_t hops[256];
 
 extern FILE* logfile;
 
@@ -48,10 +49,8 @@ void* announceToNeighbors(void* unusedParam)
 
 	while(1)
 	{
-	//printf("before send buff first: %d\n",buf[0]);	
-	//printf("before send buff second: %d\n",buf[1]);	
-	//printf("before send buff second: %d\n",buf[2]);
-		hackyBroadcast(buf, 512*sizeof(int));
+
+		hackyBroadcast(buf, 512*4);
 		nanosleep(&sleepFor, 0);
 	}
 }
@@ -79,10 +78,10 @@ void listenForNeighbors(char* logfilename)
 	int bytesRecvd;
 	while(1)
 	{
-		logfile = fopen(logfilename, "w+");
+		
 		memset(&recvBuf[0], 0, sizeof(recvBuf));
 		theirAddrLen = sizeof(theirAddr);
-		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 1000 , 0, 
+		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 4*256*2 , 0, 
 					(struct sockaddr*)&theirAddr, &theirAddrLen)) == -1)
 		{
 			perror("connectivity listener: recvfrom failed");
@@ -92,73 +91,60 @@ void listenForNeighbors(char* logfilename)
 		inet_ntop(AF_INET, &theirAddr.sin_addr, fromAddr, 100);  //This function converts the network address structure sin_addr into a character string fromaddr
 		
 		short int heardFrom = -1;
-		if(strstr(fromAddr, "10.1.1."))  //Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
-		{
-			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1); //Assign it to be node number
-			
-			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
-					
-
-			int i;
-	/*		for(i=0;i<256;i++){
-
-			memcpy(&buf[i],&recvBuf[4*i],4);
-	
-			temp[i] = ntohl(buf[i]);
-			}
-	*/		
-			memcpy(&temp[0],&recvBuf[0],4);
-			temp[0] = ntohl(temp[0]);
-			memcpy(&temp[1],&recvBuf[4],4);
-			temp[1] = ntohl(temp[1]);
-			memcpy(&temp[2],&recvBuf[8],4);
-			temp[2] = ntohl(temp[2]);
-
-			printf("heard from: %d\n", heardFrom);	
-			printf("reached TT first: %d\n",temp[0]);
-			printf("reached TT second: %d\n",temp[1]);
-			printf("reached TT third: %d\n",temp[2]);
-			
-			//record that we heard from heardFrom just now.
-			gettimeofday(&globalLastHeartbeat[heardFrom], 0);
-		}
+		
 		
 
 		//Is it a packet from the manager? (see mp2 specification for more details)
 		//send format: 'send'<4 ASCII bytes>, destID<net order 2 byte signed>, <some ASCII message>
-		else if(!strncmp(recvBuf, "send", 4))
+		if(!strncmp(recvBuf, "send", 4))
 		{
+			logfile = fopen(logfilename, "w+");
 			//TODO send the requested message to the requested destination node
-			
+			int length;
+			char message[106];	
+			char recvmsg[101];	
 
 			printf("Send msg received\n");
 
 			short int destID = recvBuf[5];
-			char message[106];	
-			char recvmsg[101];	
-			message[0] = 's';	
-			message[1] = 'd';
-			message[2] = 'i';
-			message[3] = 'n';	
-			message[4] = 'g';	
-			int length = copy_string(&message[5],&recvBuf[6]);   //formatted to be sent
-			copy_string(recvmsg,&recvBuf[6]);					 //just for logfile
+			short int no_destID = htons(destID);
 
-			printf("Cost msg received, destID is : %hd\n", destID);
-			printf("Cost msg received, msg is : %s\n", message);
+			if(costs[destID] == 1)  			//cost = 1 -> cannot reach destID
+				fprintf(logfile, "unreachable dest %d\n", destID);
+			else{		
+				
+				message[0] = 's';	
+				message[1] = 'd';
+				message[2] = 'i';
+					
+
+				memcpy(&message[3], &no_destID, sizeof(short int));	
+				length = copy_string(&message[5],&recvBuf[6]);   //formatted to be sent
+				copy_string(recvmsg,&recvBuf[6]);					 //just for logfile
+
+				printf("Cost msg received, destID is : %hd\n", destID);
+				printf("Cost msg received, msg is : %s\n", recvmsg);
+
+				fprintf(logfile, "sending packet dest %d nexthop %d message %s\n", destID,nexthops[destID],recvmsg);
+
+				if(sendto(globalSocketUDP, message, length+5, 0,
+				  (struct sockaddr*)&globalNodeAddrs[2], sizeof(globalNodeAddrs[2])) < 0)
+					perror("sendto()");
+			}
+
+			
+			fclose(logfile);
+			
 
 			//fprintf(logfile, "sending packet dest %hd nexthop %d message %s", destID, nexthop, recvmsg);
 			
-			sendto(globalSocketUDP, message, length+5, 0,
-				  (struct sockaddr*)&globalNodeAddrs[destID], sizeof(globalNodeAddrs[destID]));
-
-
-
+			
+			
 		}
 		//'cost'<4 ASCII bytes>, destID<net order 2 byte signed> newCost<net order 4 byte signed>
 		else if(!strncmp(recvBuf, "cost", 4))
 		{
-
+			logfile = fopen(logfilename, "w+");
 			int recvcost;
 			memcpy(&recvcost,&recvBuf[6],4);
 
@@ -169,8 +155,8 @@ void listenForNeighbors(char* logfilename)
 			printf("Cost msg received, neighborid is : %hd\n", nid);
 			printf("Cost msg received, newcost is : %d\n", newcost);
 
-			costs[globalMyID][nid] = newcost;
-
+			costs[nid] = newcost;
+			fclose(logfile);
 			//TODO record the cost change (remember, the link might currently be down! in that case,
 			//this is the new cost you should treat it as having once it comes back up.)
 			// ...
@@ -179,24 +165,59 @@ void listenForNeighbors(char* logfilename)
 
 
 		//TODO now check for the various types of packets you use in your own protocol
-		else if(!strncmp(recvBuf, "sding", 5))
+		else if(!strncmp(recvBuf, "sdi", 3))
 		{
+			logfile = fopen(logfilename, "w+");
 			char recvmsg[101];	
-			copy_string(recvmsg,&recvBuf[5]);
 
+								//printf("received hop is: %d\n",recvBuf[4]);
+			short int destID = recvBuf[4];
+
+			int length = copy_string(recvmsg,&recvBuf[5]);
 			printf("received msg is: %s\n",recvmsg);
-			
-			
-			fprintf(logfile, "receive packet message %s", recvmsg);
+
+			if(globalMyID == destID)
+				fprintf(logfile, "receive packet message %s\n", recvmsg);
+			else{
+				fprintf(logfile, "forward packet dest %d nexthop %d message %s\n", destID, nexthops[destID], recvmsg);
+				if(sendto(globalSocketUDP, recvBuf, length+5, 0,
+				  (struct sockaddr*)&globalNodeAddrs[2], sizeof(globalNodeAddrs[2])) < 0)
+					perror("sendto()");
+			}
+			fclose(logfile);
 			
 		}
+		else  //Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
+		{
+			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1); //Assign it to be node number
+			
+			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
+					
+			
 
-		else{
-		printf("reached TT\n");
 
+			int i;
+			for(i=0;i<256;i++){
+			memcpy(&temp[i],&recvBuf[4*i],4);
+			temp[i] = ntohl(temp[i]);
+
+			memcpy(&hops[i],&recvBuf[4*i+1024],4);
+			hops[i] = ntohl(hops[i]);
+			}
+			
+	/*		printf("heard from: %d\n", heardFrom);	
+			printf("reached TT first: %d\n",hops[0]);
+			printf("reached TT second: %d\n",hops[1]);
+			printf("reached TT third: %d\n",hops[2]);
+
+*/
+
+			//record that we heard from heardFrom just now.
+			gettimeofday(&globalLastHeartbeat[heardFrom], 0);
 		}
 
-	fclose(logfile);
+
+	
 		  
 	}
 	//(should never reach here)
