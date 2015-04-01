@@ -1,0 +1,25 @@
+test results:
+
+-25:  DV/PV send message over 3 node topology failed: one of your nodes did not write a log
+
+-10:  DV/PV shortest path in example topology failed. (don't forget tie-breaking logic: for the example topo, sending from 6 to 3 should take path 6 1 4 3) 
+
+-10:  DV/PV shortest path (0->77, 77->0, 23->50) in 8x8 grid topology failed. 
+
+-10:  DV/PV switch to better path when available failed. 
+
+-10:  DV/PV fall back to worse path failed. 
+
+-10:  DV/PV report unreachable after partition: failed. Sender reported unreachable before the topology was partitioned.
+
+-10:  DV/PV heal after partition: failed. 
+
+-10:  DV/PV with lots of link up/downs failed. 
+
+====================
+
+Time tested: Wed Apr  1 02:51:58 2015
+
+score: 5/100
+
+Remember, this score is only informational/hypothetical - these scores will be closely correlated with people's final grades, but there will be outliers.
