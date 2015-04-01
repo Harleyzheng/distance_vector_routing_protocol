@@ -104,7 +104,7 @@ void listenForNeighbors(char* logfilename)
 			char message[106];	
 			char recvmsg[101];	
 
-			printf("Send msg received\n");
+			
 
 			short int destID = recvBuf[5];
 			short int no_destID = htons(destID);
@@ -210,6 +210,13 @@ void listenForNeighbors(char* logfilename)
 				nexthops[i] = heardFrom;
 
 			}
+			if(costs[i] == 1 && temp[i] != 1){
+			costs[i] = temp[i]+costs[heardFrom];
+			nexthops[i] = heardFrom;
+
+			}
+
+
 			}
 			
 			
