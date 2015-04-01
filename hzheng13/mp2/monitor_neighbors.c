@@ -49,7 +49,6 @@ void* announceToNeighbors(void* unusedParam)
 
 	while(1)
 	{
-
 		hackyBroadcast(buf, 512*4);
 		nanosleep(&sleepFor, 0);
 	}
@@ -181,7 +180,7 @@ void listenForNeighbors(char* logfilename)
 			else{
 				fprintf(logfile, "forward packet dest %d nexthop %d message %s\n", destID, nexthops[destID], recvmsg);
 				if(sendto(globalSocketUDP, recvBuf, length+5, 0,
-				  (struct sockaddr*)&globalNodeAddrs[2], sizeof(globalNodeAddrs[2])) < 0)
+				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0)
 					perror("sendto()");
 			}
 			fclose(logfile);
@@ -210,24 +209,30 @@ void listenForNeighbors(char* logfilename)
 			nexthops[i] = heardFrom;
 
 			}
+			
 			if(temp[i] != 1)   //if neighbor has cost 1, skip it.
 			if(costs[i] > temp[i]+costs[heardFrom]){
 				costs[i] = temp[i]+costs[heardFrom];
 				nexthops[i] = heardFrom;
 			}
 
-		/*	printf("costs1 msg is: %d\n",costs[1]);
+			/*printf("costs0 msg is: %d\n",costs[0]);
+			printf("costs1 msg is: %d\n",costs[1]);
 			printf("costs2 msg is: %d\n",costs[2]);
-			printf("costs5 msg is: %d\n",costs[5]);
+			printf("costs200 msg is: %d\n",costs[200]);
+			printf("nexthops0 msg is: %d\n",nexthops[0]);
 			printf("nexthops1 msg is: %d\n",nexthops[1]);
 			printf("nexthops2 msg is: %d\n",nexthops[2]);
-			printf("nexthops5 msg is: %d\n",nexthops[5]);
+			printf("nexthops200 msg is: %d\n",nexthops[200]);
 */
 
 
 			//printf("costs[i] and temp[i] msg is: %d and %d\n",costs[i],temp[i]);
 
-
+			int no_ne = htonl(costs[i]);
+			int hop = htonl(nexthops[i]);
+			buf[i] = no_ne;
+			buf[i+256] = hop;
 
 
 			}
