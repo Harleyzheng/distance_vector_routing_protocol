@@ -203,14 +203,16 @@ void listenForNeighbors(char* logfilename)
 
 			memcpy(&hops[i],&recvBuf[4*i+1024],4);
 			hops[i] = ntohl(hops[i]);
+
+
+			if(costs[i] > temp[i]+costs[heardFrom]){
+				costs[i] = temp[i]+costs[heardFrom];
+				nexthops[i] = heardFrom;
+
+			}
 			}
 			
-	/*		printf("heard from: %d\n", heardFrom);	
-			printf("reached TT first: %d\n",hops[0]);
-			printf("reached TT second: %d\n",hops[1]);
-			printf("reached TT third: %d\n",hops[2]);
-
-*/
+			
 
 			//record that we heard from heardFrom just now.
 			gettimeofday(&globalLastHeartbeat[heardFrom], 0);
