@@ -38,7 +38,9 @@ uint32_t costs[256];
 uint32_t nexthops[256];
 uint32_t buf[256];
 uint32_t temp[512];
+uint32_t backupcosts[256];
 uint32_t hops[512];
+int dead[256];
 FILE* logfile;
 
 int main(int argc, char** argv)
@@ -58,6 +60,7 @@ int main(int argc, char** argv)
 	{
 		gettimeofday(&globalLastHeartbeat[i], 0);
 		globalisneighbor[i] = 0;
+		dead[i] = 1;
 		char tempaddr[100];    
 		sprintf(tempaddr, "10.1.1.%d", i);  	//send formatted 10.1.1.x to tempaddr
 		memset(&globalNodeAddrs[i], 0, sizeof(globalNodeAddrs[i]));
