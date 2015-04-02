@@ -20,11 +20,13 @@ extern int globalSocketUDP;
 //pre-filled for sending to 10.1.1.0 - 255, port 7777
 extern struct sockaddr_in globalNodeAddrs[256];
 extern uint32_t costs[256];
+extern uint32_t backupcosts[256];
 extern uint32_t nexthops[256];
 extern uint32_t buf[256];
 extern uint32_t temp[256];
 extern uint32_t hops[256];
 extern int globalisneighbor[256];
+extern int dead[256];
 extern FILE* logfile;
 
 //Yes, this is terrible. It's also terrible that, in Linux, a socket
@@ -204,7 +206,7 @@ void listenForNeighbors(char* logfilename)
 		{
 			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1); //Assign it to be node number
 			globalisneighbor[heardFrom] = 1;			
-
+			if(costs[heardFrom] == 1) costs[heardFrom] = backupcosts[heardFrom];
 
 			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
 					
@@ -216,8 +218,12 @@ void listenForNeighbors(char* logfilename)
 			int i;
 			for(i=0;i<256;i++){
 				elapsedTime = (tv.tv_sec - globalLastHeartbeat[i].tv_sec) * 1000;
-				if(globalisneighbor[i]==1 && elapsedTime>5000)
+				if(globalisneighbor[i]==1 && elapsedTime>3000){
+					backupcosts[i] = costs[i];
 					costs[i] = 1;
+					globalisneighbor[i]=0;
+				}
+
 
 
 				if(heardFrom == i) continue;	
