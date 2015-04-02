@@ -21,7 +21,7 @@ extern int globalSocketUDP;
 extern struct sockaddr_in globalNodeAddrs[256];
 extern uint32_t costs[256];
 extern uint32_t nexthops[256];
-extern uint32_t buf[512];
+extern uint32_t buf[256];
 extern uint32_t temp[256];
 extern uint32_t hops[256];
 
@@ -49,7 +49,7 @@ void* announceToNeighbors(void* unusedParam)
 
 	while(1)
 	{
-		hackyBroadcast(buf, 512*4);
+		hackyBroadcast(buf, 256*4);
 		nanosleep(&sleepFor, 0);
 	}
 }
@@ -72,7 +72,7 @@ void listenForNeighbors(char* logfilename)
 	char fromAddr[100];
 	struct sockaddr_in theirAddr;
 	socklen_t theirAddrLen;
-	unsigned char recvBuf[4*256*2];
+	unsigned char recvBuf[4*256];
 
 	int bytesRecvd;
 	while(1)
@@ -80,7 +80,7 @@ void listenForNeighbors(char* logfilename)
 		
 		memset(&recvBuf[0], 0, sizeof(recvBuf));
 		theirAddrLen = sizeof(theirAddr);
-		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 4*256*2 , 0, 
+		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 4*256 , 0, 
 					(struct sockaddr*)&theirAddr, &theirAddrLen)) == -1)
 		{
 			perror("connectivity listener: recvfrom failed");
@@ -197,42 +197,59 @@ void listenForNeighbors(char* logfilename)
 
 			int i;
 			for(i=0;i<256;i++){
+			if(heardFrom == i) continue;	
+			
 			memcpy(&temp[i],&recvBuf[4*i],4);
 			temp[i] = ntohl(temp[i]);
 
-			memcpy(&hops[i],&recvBuf[4*i+1024],4);
-			hops[i] = ntohl(hops[i]);
+			//memcpy(&hops[i],&recvBuf[4*i+1024],4);
+			//hops[i] = ntohl(hops[i]);
 
 
 			if(costs[i] == 1 && temp[i] != 1){
-			costs[i] = temp[i]+costs[heardFrom];
-			nexthops[i] = heardFrom;
-
+			
+				costs[i] = temp[i]+costs[heardFrom];
+				if(heardFrom != nexthops[heardFrom])	
+					nexthops[i] = nexthops[heardFrom];
+				else nexthops[i] = heardFrom;
+				int no_ne = htonl(costs[i]);
+				
+				buf[i] = no_ne;
+				
 			}
 			
 			if(temp[i] != 1)   //if neighbor has cost 1, skip it.
 			if(costs[i] > temp[i]+costs[heardFrom]){
+			
 				costs[i] = temp[i]+costs[heardFrom];
 				nexthops[i] = heardFrom;
+				int no_ne = htonl(costs[i]);
+				
+				buf[i] = no_ne;
+				
 			}
-
-			/*printf("costs0 msg is: %d\n",costs[0]);
+			
+	//	printf("HeardFrom: %d\n",heardFrom);
+	/*	
 			printf("costs1 msg is: %d\n",costs[1]);
+			printf("costs5 msg is: %d\n",costs[5]);
 			printf("costs2 msg is: %d\n",costs[2]);
-			printf("costs200 msg is: %d\n",costs[200]);
-			printf("nexthops0 msg is: %d\n",nexthops[0]);
+			printf("costs3 msg is: %d\n",costs[3]);
+			
+			
 			printf("nexthops1 msg is: %d\n",nexthops[1]);
+			printf("nexthops5 msg is: %d\n",nexthops[5]);
 			printf("nexthops2 msg is: %d\n",nexthops[2]);
-			printf("nexthops200 msg is: %d\n",nexthops[200]);
-*/
 
+
+			
+			printf("nexthops3 msg is: %d\n",nexthops[3]);
+
+*/
 
 			//printf("costs[i] and temp[i] msg is: %d and %d\n",costs[i],temp[i]);
 
-			int no_ne = htonl(costs[i]);
-			int hop = htonl(nexthops[i]);
-			buf[i] = no_ne;
-			buf[i+256] = hop;
+
 
 
 			}
