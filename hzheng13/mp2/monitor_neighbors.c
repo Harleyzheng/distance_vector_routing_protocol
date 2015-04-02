@@ -24,7 +24,7 @@ extern uint32_t nexthops[256];
 extern uint32_t buf[256];
 extern uint32_t temp[256];
 extern uint32_t hops[256];
-
+extern int globalisneighbor[256];
 extern FILE* logfile;
 
 //Yes, this is terrible. It's also terrible that, in Linux, a socket
@@ -78,6 +78,10 @@ void listenForNeighbors(char* logfilename)
 	while(1)
 	{
 		
+		struct timeval tv;
+		double elapsedTime;
+		
+
 		memset(&recvBuf[0], 0, sizeof(recvBuf));
 		theirAddrLen = sizeof(theirAddr);
 		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 4*256 , 0, 
@@ -124,11 +128,16 @@ void listenForNeighbors(char* logfilename)
 				printf("Cost msg received, destID is : %hd\n", destID);
 				printf("Cost msg received, msg is : %s\n", recvmsg);
 
-				fprintf(logfile, "sending packet dest %d nexthop %d message %s\n", destID,nexthops[destID],recvmsg);
+				
 
 				if(sendto(globalSocketUDP, message, length+5, 0,
-				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0)
+				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0){
 					perror("sendto()");
+					fprintf(logfile, "unreachable dest %d\n", destID);
+					printf("my id is %d\n",globalMyID);
+				}
+				else
+					fprintf(logfile, "sending packet dest %d nexthop %d message %s\n", destID,nexthops[destID],recvmsg);
 			}
 
 			
@@ -178,10 +187,15 @@ void listenForNeighbors(char* logfilename)
 			if(globalMyID == destID)
 				fprintf(logfile, "receive packet message %s\n", recvmsg);
 			else{
-				fprintf(logfile, "forward packet dest %d nexthop %d message %s\n", destID, nexthops[destID], recvmsg);
+				
 				if(sendto(globalSocketUDP, recvBuf, length+5, 0,
-				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0)
+				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0){
 					perror("sendto()");
+					printf("my id is %d\n",globalMyID);
+					fprintf(logfile, "unreachable dest %d\n", destID);
+				}
+				else
+					fprintf(logfile, "forward packet dest %d nexthop %d message %s\n", destID,nexthops[destID],recvmsg);
 			}
 			fclose(logfile);
 			
@@ -189,58 +203,61 @@ void listenForNeighbors(char* logfilename)
 		else  //Returns a pointer to the first occurrence of str2 in str1, or a null pointer if str2 is not part of str1.
 		{
 			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1); //Assign it to be node number
-			
+			globalisneighbor[heardFrom] = 1;			
+
+
 			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
 					
 			//printf("heardfrom msg is: %d\n",heardFrom);
 
+			gettimeofday(&tv,0);
+			
 
 			int i;
 			for(i=0;i<256;i++){
-			if(heardFrom == i) continue;	
+				elapsedTime = (tv.tv_sec - globalLastHeartbeat[i].tv_sec) * 1000;
+				if(globalisneighbor[i]==1 && elapsedTime>5000)
+					costs[i] = 1;
+
+
+				if(heardFrom == i) continue;	
 			
-			memcpy(&temp[i],&recvBuf[4*i],4);
-			temp[i] = ntohl(temp[i]);
+				memcpy(&temp[i],&recvBuf[4*i],4);
+				temp[i] = ntohl(temp[i]);
 
-			//memcpy(&hops[i],&recvBuf[4*i+1024],4);
-			//hops[i] = ntohl(hops[i]);
+				//memcpy(&hops[i],&recvBuf[4*i+1024],4);
+				//hops[i] = ntohl(hops[i]);
 
 
-			if(costs[i] == 1 && temp[i] != 1){
+				if(costs[i] == 1 && temp[i] != 1){
 			
-				costs[i] = temp[i]+costs[heardFrom];
-				if(heardFrom != nexthops[heardFrom])	
-					nexthops[i] = nexthops[heardFrom];
-				else nexthops[i] = heardFrom;
-				int no_ne = htonl(costs[i]);
+					costs[i] = temp[i]+costs[heardFrom];
+					if(heardFrom != nexthops[heardFrom])	
+						nexthops[i] = nexthops[heardFrom];
+					else nexthops[i] = heardFrom;
+					int no_ne = htonl(costs[i]);
 				
-				buf[i] = no_ne;
+					buf[i] = no_ne;
 				
-			}
-			
-			if(temp[i] != 1)   //if neighbor has cost 1, skip it.
-			if(costs[i] > temp[i]+costs[heardFrom]){
-			
-				costs[i] = temp[i]+costs[heardFrom];
-				nexthops[i] = heardFrom;
-				int no_ne = htonl(costs[i]);
-				
-				buf[i] = no_ne;
-			}
-
-			if(temp[i] != 1)   //breaking tie
-			if(costs[i] == temp[i]+costs[heardFrom]){
-		/*		FILE* temp = fopen("temp.txt","w+");
-				fprintf(temp,"reached\n");
-				fprintf(temp,"heardfrom is %d\n", heardFrom);				
-				fprintf(temp,"my nexthop is %d\n", nexthops[globalMyID]);
-				fclose(temp);*/
-				if(nexthops[i] > heardFrom)			
-				{	
-					
-					nexthops[i] = heardFrom;
 				}
-			}
+			
+				if(temp[i] != 1)   //if neighbor has cost 1, skip it.
+				if(costs[i] > temp[i]+costs[heardFrom]){
+			
+					costs[i] = temp[i]+costs[heardFrom];
+					nexthops[i] = heardFrom;
+					int no_ne = htonl(costs[i]);
+				
+					buf[i] = no_ne;
+				}
+
+				if(temp[i] != 1)   //breaking tie
+				if(costs[i] == temp[i]+costs[heardFrom]){
+					if(nexthops[i] > heardFrom)			
+					{		
+						nexthops[i] = heardFrom;
+					}
+				}
 			
 	//	printf("HeardFrom: %d\n",heardFrom);
 	/*	
