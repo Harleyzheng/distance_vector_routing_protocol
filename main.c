@@ -20,6 +20,7 @@ int globalMyID = 0;
 //in order to realize when a neighbor has gotten cut off from you.
 struct timeval globalLastHeartbeat[256];
 
+int globalisneighbor[256];
 //our all-purpose UDP socket, to be bound to 10.1.1.globalMyID, port 7777
 int globalSocketUDP;
 //pre-filled for sending to 10.1.1.0 - 255, port 7777
@@ -56,7 +57,7 @@ int main(int argc, char** argv)
 	for(i=0;i<256;i++)
 	{
 		gettimeofday(&globalLastHeartbeat[i], 0);
-		
+		globalisneighbor[i] = 0;
 		char tempaddr[100];    
 		sprintf(tempaddr, "10.1.1.%d", i);  	//send formatted 10.1.1.x to tempaddr
 		memset(&globalNodeAddrs[i], 0, sizeof(globalNodeAddrs[i]));

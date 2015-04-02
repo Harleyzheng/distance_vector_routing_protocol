@@ -72,7 +72,6 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		printf("wtf\n");
 		int msgLen = 4+sizeof(short int)+strlen(argv[4]);
 		char* sendBuf = malloc(msgLen);
 
