@@ -26,7 +26,7 @@ extern uint32_t buf[256];
 extern uint32_t temp[256];
 extern uint32_t hops[256];
 extern int globalisneighbor[256];
-extern int dead[256];
+
 extern FILE* logfile;
 
 
@@ -47,8 +47,6 @@ void* announceToNeighbors(void* unusedParam)
 	struct timespec sleepFor;
 	sleepFor.tv_sec = 0;
 	sleepFor.tv_nsec = 300 * 1000 * 1000; //300 ms
-
-
 
 	while(1)
 	{
@@ -214,7 +212,9 @@ void listenForNeighbors(char* logfilename)
 		{
 			
 			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1); //Assign it to be node number
-			//globalisneighbor[heardFrom] = 1;			
+			globalisneighbor[heardFrom] = 1;
+
+					
 			//if(costs[heardFrom] == 1) costs[heardFrom] = backupcosts[heardFrom];
 
 			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
@@ -230,7 +230,15 @@ void listenForNeighbors(char* logfilename)
 					costs[i] = 1;
 					globalisneighbor[i]=0;
 				}
-*/				if(heardFrom == i) continue;
+*/				
+
+				//update default not from cost file costs
+				if(globalisneighbor[heardFrom] == 1 && costs[heardFrom] == -1){
+					costs[heardFrom] = 1;
+					int no_ne = htonl(costs[heardFrom]);
+					buf[heardFrom] = no_ne;
+				}
+				
 
 				memcpy(&temp[i],&recvBuf[4*i],4);
 				temp[i] = ntohl(temp[i]);
@@ -239,52 +247,51 @@ void listenForNeighbors(char* logfilename)
 				//hops[i] = ntohl(hops[i]);
 
 				//update if costs[i] == 1
-				if(costs[heardFrom] != 1 && costs[i] == 1 && temp[i] != 1){
-					printf("I heardfrom %d i is %d\n", heardFrom,i);
+				if(costs[i] == -1 && temp[i] != -1){
+					//printf("I heardfrom %d i is %d\n", heardFrom,i);
 
 					costs[i] = temp[i]+costs[heardFrom];
 					if(heardFrom != nexthops[heardFrom])	
 						nexthops[i] = nexthops[heardFrom];
 					else nexthops[i] = heardFrom;
 
-					printf("costs[i] is %d nexthops[i] is %d\n", costs[i],nexthops[i]);
+					//printf("costs[i] is %d nexthops[i] is %d\n", costs[i],nexthops[i]);
 					int no_ne = htonl(costs[i]);
 					buf[i] = no_ne;
 				
 				}
 			
 				//find shorter path. if neighbor has cost 1, skip it.
-				if(costs[heardFrom] != 1 && costs[i] > temp[i]+costs[heardFrom] && temp[i] != 1){
-					printf("I also reached 2\n");
+				if(costs[i] > temp[i]+costs[heardFrom] && temp[i] != -1){
+					//printf("I also reached 2\n");
 					costs[i] = temp[i]+costs[heardFrom];
 					nexthops[i] = heardFrom;
 					int no_ne = htonl(costs[i]);
-				
 					buf[i] = no_ne;
 				}
-/*
+
 				//breaking tie
-				if(costs[heardFrom] != 1 && costs[i] == temp[i]+costs[heardFrom] && temp[i] != 1){			
-					printf("I also reached 3\n");
-					if(nexthops[i] > heardFrom && nexthops[i]==i)			
+				if(costs[i] == temp[i]+costs[heardFrom] && temp[i] != -1){			
+					//printf("I also reached 3\n");
+					if(nexthops[i] > heardFrom)			
 					{		
 						nexthops[i] = heardFrom;
 					}
 				}
-		*/	
+			
 	//	printf("HeardFrom: %d\n",heardFrom);
 		
-	/*		printf("costs1 msg is: %d\n",costs[1]);
+			printf("costs1 msg is: %d\n",costs[1]);
 			printf("costs2 msg is: %d\n",costs[2]);
-			printf("costs5 msg is: %d\n",costs[5]);
-			printf("costs6 msg is: %d\n",costs[6]);
+			printf("costs3 msg is: %d\n",costs[3]);
+			printf("costs4 msg is: %d\n",costs[4]);
 			
 			
 			printf("nexthops1 msg is: %d\n",nexthops[1]);
 			printf("nexthops2 msg is: %d\n",nexthops[2]);
-			printf("nexthops5 msg is: %d\n",nexthops[5]);
-			printf("nexthops6 msg is: %d\n",nexthops[6]);
-*/
+			printf("nexthops3 msg is: %d\n",nexthops[3]);
+			printf("nexthops4 msg is: %d\n",nexthops[4]);
+
 			//printf("costs[i] and temp[i] msg is: %d and %d\n",costs[i],temp[i]);
 			}
 
