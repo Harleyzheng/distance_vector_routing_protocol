@@ -35,7 +35,7 @@ struct sockaddr_in {
 */
 uint32_t costs[256];
 uint32_t nexthops[256];
-uint32_t buf[512];
+uint32_t buf[256];
 uint32_t temp[512];
 uint32_t hops[512];
 FILE* logfile;
@@ -115,9 +115,8 @@ int main(int argc, char** argv)
 	
 	for(i=0;i<256;i++){
 		int no_ne = htonl(costs[i]);
-		int hop = htonl(nexthops[i]);
 		buf[i] = no_ne;
-		buf[i+256] = hop;
+		
 	}
 
 	
