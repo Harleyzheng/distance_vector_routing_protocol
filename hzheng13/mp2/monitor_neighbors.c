@@ -226,7 +226,20 @@ void listenForNeighbors(char* logfilename)
 				int no_ne = htonl(costs[i]);
 				
 				buf[i] = no_ne;
-				
+			}
+
+			if(temp[i] != 1)   //breaking tie
+			if(costs[i] == temp[i]+costs[heardFrom]){
+		/*		FILE* temp = fopen("temp.txt","w+");
+				fprintf(temp,"reached\n");
+				fprintf(temp,"heardfrom is %d\n", heardFrom);				
+				fprintf(temp,"my nexthop is %d\n", nexthops[globalMyID]);
+				fclose(temp);*/
+				if(nexthops[i] > heardFrom)			
+				{	
+					
+					nexthops[i] = heardFrom;
+				}
 			}
 			
 	//	printf("HeardFrom: %d\n",heardFrom);
