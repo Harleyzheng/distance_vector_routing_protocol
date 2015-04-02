@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 	}
 	costs[globalMyID] = 0;
 
-	FILE* costfile = fopen(argv[2], "r+");
+	FILE* costfile = fopen(argv[2], "r");
 
 	
   	int sth;
@@ -123,8 +123,8 @@ int main(int argc, char** argv)
 		
 	}
 
-	
 
+	logfile = fopen(argv[3], "w+");
 	
 
 	printf("test buff first: %d\n",buf[0]);	

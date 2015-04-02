@@ -1,17 +1,18 @@
-#! /bin/bash
-
-clear
-
-echo "Now starts running nodes"
 
 
+my $thisTest = 2;
+my @topoNodes = (0, 1, 2, 3, 4, 5, 6, 7, 255);
+my $numTopoNodes = @topoNodes;
 
-./vec_router 3 testinitcosts3 logfile3 &
-./vec_router 0 testinitcosts0 logfile0 &
-./vec_router 200 testinitcosts200 logfile200 &
-./vec_router 5 testinitcosts5 logfile5 &
-./vec_router 2 testinitcosts2 logfile2 &
-./vec_router 1 testinitcosts1 logfile1 &
-./vec_router 4 testinitcosts4 logfile4 &
-./vec_router 6 testinitcosts6 logfile6 &
-./vec_router 7 testinitcosts7 logfile7 &
+for(my $ind=0; $ind<$numTopoNodes; $ind++)
+{
+      `./vec_router $topoNodes[$ind] test$thisTest.initcosts$topoNodes[$ind] log$topoNodes[$ind] >/dev/null 2>/dev/null &`;
+}
+
+sleep(5);
+
+`./man 6 send 3 "this is just the example topo, ok"`;
+
+sleep(1);
+
+#(examine logs)
