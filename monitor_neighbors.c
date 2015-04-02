@@ -192,7 +192,7 @@ void listenForNeighbors(char* logfilename)
 			
 			//TODO: this node can consider heardFrom to be directly connected to it; do any such logic now.
 					
-			printf("heardfrom msg is: %d\n",heardFrom);
+			//printf("heardfrom msg is: %d\n",heardFrom);
 
 
 			int i;
