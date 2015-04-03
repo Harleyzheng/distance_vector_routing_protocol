@@ -280,7 +280,7 @@ void listenForNeighbors(char* logfilename)
 				}
 			
 	//	printf("HeardFrom: %d\n",heardFrom);
-		
+		/*
 			printf("costs1 msg is: %d\n",costs[1]);
 			printf("costs2 msg is: %d\n",costs[2]);
 			printf("costs3 msg is: %d\n",costs[3]);
@@ -291,7 +291,7 @@ void listenForNeighbors(char* logfilename)
 			printf("nexthops2 msg is: %d\n",nexthops[2]);
 			printf("nexthops3 msg is: %d\n",nexthops[3]);
 			printf("nexthops4 msg is: %d\n",nexthops[4]);
-
+*/
 			//printf("costs[i] and temp[i] msg is: %d and %d\n",costs[i],temp[i]);
 			}
 
@@ -306,4 +306,5 @@ void listenForNeighbors(char* logfilename)
 	//(should never reach here)
 	close(globalSocketUDP);
 }
+
 
