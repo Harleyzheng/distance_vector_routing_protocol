@@ -13,7 +13,7 @@
 
 void listenForNeighbors();
 void* announceToNeighbors(void* unusedParam);
-
+void* neighborStillAlive(void* unusedParam);
 
 int globalMyID = 0;
 //last time you heard from each node. TODO: you will want to monitor this
@@ -38,7 +38,8 @@ uint32_t costs[256];
 uint32_t nexthops[256];
 uint32_t buf[256];
 uint32_t temp[512];
-uint32_t backupcosts[256];
+uint32_t backupcostsforneighbor[256];
+uint32_t nexthopsforneighbor[256];
 uint32_t hops[512];
 
 FILE* logfile;
@@ -60,7 +61,7 @@ int main(int argc, char** argv)
 	{
 		gettimeofday(&globalLastHeartbeat[i], 0);
 		globalisneighbor[i] = 0;
-
+		
 		char tempaddr[100];    
 		sprintf(tempaddr, "10.1.1.%d", i);  	//send formatted 10.1.1.x to tempaddr
 		memset(&globalNodeAddrs[i], 0, sizeof(globalNodeAddrs[i]));
@@ -118,6 +119,8 @@ int main(int argc, char** argv)
 	
 	
 	for(i=0;i<256;i++){
+		backupcostsforneighbor[i] = costs[i];
+		nexthopsforneighbor[i] = i;
 		int no_ne = htonl(costs[i]);
 		buf[i] = no_ne;
 		
@@ -125,6 +128,7 @@ int main(int argc, char** argv)
 
 
 	logfile = fopen(argv[3], "w+");
+
 	
 
 	printf("test buff first: %d\n",buf[0]);	
@@ -136,6 +140,8 @@ int main(int argc, char** argv)
 	//start threads... feel free to add your own, and to remove the provided ones.
 	pthread_t announcerThread;
 	pthread_create(&announcerThread, 0, announceToNeighbors, (void*)0);
+	pthread_t neighboraliveThread;
+	pthread_create(&neighboraliveThread, 0, neighborStillAlive, (void*)0);
 	
 	
 	
