@@ -76,12 +76,12 @@ void isAlive(){
 	for(i=0;i<256;i++){
 		if(globalisneighbor[i]==1){
 			elapsedTime = (tv.tv_sec - globalLastHeartbeat[i].tv_sec) * 1000;
-			if(elapsedTime > 1000){
+			if(elapsedTime > 610){
 
 				backupcostsforneighbor[i] = costs[i];
 				nexthopsforneighbor[i] = nexthops[i];
 				costs[i] = -1;
-				//nexthops[i] = 7;
+				nexthops[i] = i;
 				int no_ne = htonl(costs[i]);
 				buf[i] = no_ne;
 				globalisneighbor[i]=0;
@@ -259,12 +259,13 @@ void listenForNeighbors(char* logfilename)
 			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1);
 			
 			int i;
-			if(globalisneighbor[heardFrom] == 0){
+		/*	if(globalisneighbor[heardFrom] == 0){
 				if(backupcostsforneighbor[heardFrom] != -1) {
 					costs[heardFrom] = backupcostsforneighbor[heardFrom];
 					nexthops[heardFrom] = nexthopsforneighbor[heardFrom];}
 				
 			}
+		*/
 			globalisneighbor[heardFrom] = 1;
 
 			//update default not from cost file costs
@@ -286,9 +287,9 @@ void listenForNeighbors(char* logfilename)
 
 					costs[i] = -1;
 					nexthops[i] = i;
-					int no_ne = htonl(costs[heardFrom]);
+					int no_ne = htonl(costs[i]);
 					buf[i] = no_ne;
-					hackyBroadcastonlytoneighbors(buf, 256*4);
+					//hackyBroadcastonlytoneighbors(buf, 256*4);
 				}
 
 				//memcpy(&hops[i],&recvBuf[4*i+1024],4);
@@ -309,7 +310,7 @@ void listenForNeighbors(char* logfilename)
 				}
 		
 				//find shorter path. if neighbor has cost 1, skip it.
-				if(costs[i] > temp[i]+costs[heardFrom] && temp[i] != -1){
+				if(costs[i] != -1 && costs[i] > temp[i]+costs[heardFrom] && temp[i] != -1){
 					//printf("I also reached 2\n");
 					costs[i] = temp[i]+costs[heardFrom];
 					nexthops[i] = heardFrom;
@@ -318,7 +319,7 @@ void listenForNeighbors(char* logfilename)
 				}
 
 				//breaking tie
-				else if(costs[i] == temp[i]+costs[heardFrom] && temp[i] != -1)	{			
+				else if(costs[i] != -1 && costs[i] == temp[i]+costs[heardFrom] && temp[i] != -1){			
 					//printf("I also reached 3\n");
 					if(nexthops[i] > heardFrom)			
 					{		
