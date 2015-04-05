@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 		close(globalSocketUDP);
 		exit(1);
 	}
-	
+		
 	
 	for(i=0;i<256;i++){
 		backupcostsforneighbor[i] = costs[i];
@@ -126,16 +126,9 @@ int main(int argc, char** argv)
 		
 	}
 
-
 	logfile = fopen(argv[3], "w+");
 
 	
-
-	printf("test buff first: %d\n",buf[0]);	
-	printf("test buff second: %d\n",buf[1]);	
-	printf("test buff third: %d\n",buf[2]);
-
-
 
 	//start threads... feel free to add your own, and to remove the provided ones.
 	pthread_t announcerThread;
@@ -144,10 +137,10 @@ int main(int argc, char** argv)
 //	pthread_create(&neighboraliveThread, 0, neighborStillAlive, (void*)0);
 	
 	
-	
 	//good luck, have fun!
 	listenForNeighbors(argv[3]);
 	
 	
 	
 }
+

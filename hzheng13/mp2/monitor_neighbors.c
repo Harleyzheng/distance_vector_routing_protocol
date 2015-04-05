@@ -269,12 +269,14 @@ void listenForNeighbors(char* logfilename)
 			globalisneighbor[heardFrom] = 1;
 
 			//update default not from cost file costs
-			if(globalisneighbor[heardFrom] == 1 && costs[heardFrom] == -1){
-				costs[heardFrom] = 1;
+			if(costs[heardFrom] > 1){
+				costs[heardFrom] = 1;		
+				nexthops[heardFrom] = heardFrom;
 				int no_ne = htonl(costs[heardFrom]);
 				buf[heardFrom] = no_ne;
+				
 			}
-			
+
 			for(i=0;i<256;i++){
 
 				memcpy(&temp[i],&recvBuf[4*i],4);
@@ -285,10 +287,10 @@ void listenForNeighbors(char* logfilename)
 					//sprintf(logLine, "I am the neighbor of a node with broken link\n");
 					//fwrite(logLine, 1, strlen(logLine), logfile);
 
-					costs[i] = -1;
-					nexthops[i] = i;
-					int no_ne = htonl(costs[i]);
-					buf[i] = no_ne;
+			//		costs[i] = -1;
+			//		nexthops[i] = i;
+			//		int no_ne = htonl(costs[i]);
+			//		buf[i] = no_ne;
 					//hackyBroadcastonlytoneighbors(buf, 256*4);
 				}
 
@@ -341,4 +343,5 @@ void listenForNeighbors(char* logfilename)
 	//(should never reach here)
 	close(globalSocketUDP);
 }
+
 
