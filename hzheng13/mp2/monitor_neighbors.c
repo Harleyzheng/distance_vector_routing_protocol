@@ -269,7 +269,7 @@ void listenForNeighbors(char* logfilename)
 			globalisneighbor[heardFrom] = 1;
 
 			//update default not from cost file costs
-			if(costs[heardFrom] > 1){
+			if(costs[heardFrom] > 1 || costs[heardFrom] == -1){
 				costs[heardFrom] = 1;		
 				nexthops[heardFrom] = heardFrom;
 				int no_ne = htonl(costs[heardFrom]);
@@ -343,5 +343,6 @@ void listenForNeighbors(char* logfilename)
 	//(should never reach here)
 	close(globalSocketUDP);
 }
+
 
 
