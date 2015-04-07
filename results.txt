@@ -13,12 +13,12 @@ test results:
 
 -10:  DV/PV with lots of link up/downs failed. 
 
-(current version late: -18)
+(current version late: -90)
 
 ====================
 
-Time tested: Mon Apr  6 03:44:31 2015
+Time tested: Tue Apr  7 03:48:30 2015
 
-score: 32/100
+score: 0/100
 
 Remember, this score is only informational/hypothetical - these scores will be closely correlated with people's final grades, but there will be outliers.
