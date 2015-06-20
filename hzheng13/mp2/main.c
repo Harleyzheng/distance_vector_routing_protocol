@@ -53,6 +53,7 @@ int main(int argc, char** argv)
 	}
 	
 	
+
 	//initialization: get this process's node ID, record what time it is, 
 	//and set up our sockaddr_in's for sending to the other nodes.
 	globalMyID = atoi(argv[1]);
