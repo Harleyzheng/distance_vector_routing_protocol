@@ -131,7 +131,6 @@ void listenForNeighbors(char* logfilename)
 	{
 		char logLine[80];
 
-
 		memset(&recvBuf[0], 0, sizeof(recvBuf));
 		theirAddrLen = sizeof(theirAddr);
 		if ((bytesRecvd = recvfrom(globalSocketUDP, recvBuf, 4*256 , 0, 
@@ -145,7 +144,6 @@ void listenForNeighbors(char* logfilename)
 		
 		short int heardFrom = -1;
 		
-		
 		//Is it a packet from the manager? (see mp2 specification for more details)
 		//send format: 'send'<4 ASCII bytes>, destID<net order 2 byte signed>, <some ASCII message>
 		if(!strncmp(recvBuf, "send", 4))
@@ -156,12 +154,10 @@ void listenForNeighbors(char* logfilename)
 			char message[106];	
 			char recvmsg[101];	
 
-			
-
 			short int destID = recvBuf[5];
 			short int no_destID = htons(destID);
 
-			if(costs[destID] == -1) {		//cost = 1 -> cannot reach destID
+			if(costs[destID] == -1) {							//cost = 1 -> cannot reach destID
 				sprintf(logLine, "unreachable dest %d\n", destID);
 				fwrite(logLine, 1, strlen(logLine), logfile);}
 				
@@ -172,34 +168,23 @@ void listenForNeighbors(char* logfilename)
 					
 
 				memcpy(&message[3], &no_destID, sizeof(short int));	
-				length = copy_string(&message[5],&recvBuf[6]);   //formatted to be sent
+				length = copy_string(&message[5],&recvBuf[6]);   			 //formatted to be sent
 				copy_string(recvmsg,&recvBuf[6]);					 //just for logfile
-
-			//	printf("Cost msg received, nexthop is : %hd\n", nexthops[destID]);
-			//	printf("Cost msg received, msg is : %s\n", recvmsg);
-
 
 				if(sendto(globalSocketUDP, message, length+5, 0,
 				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0){
 					perror("sendto()");
 					sprintf(logLine, "unreachable dest %d\n", destID);
 					fwrite(logLine, 1, strlen(logLine), logfile);
-			//		printf("my id is %d\n",globalMyID);
 				}
 				else{
 					sprintf(logLine, "sending packet dest %d nexthop %d message %s\n", destID, nexthops[destID], recvmsg);
 					fwrite(logLine, 1, strlen(logLine), logfile);
-
 				}
 			}
-
-			
-
 			//fprintf(logfile, "sending packet dest %hd nexthop %d message %s", destID, nexthop, recvmsg);
-			
-			
-			
 		}
+		
 		//'cost'<4 ASCII bytes>, destID<net order 2 byte signed> newCost<net order 4 byte signed>
 		else if(!strncmp(recvBuf, "cost", 4))
 		{
@@ -217,19 +202,14 @@ void listenForNeighbors(char* logfilename)
 			costs[nid] = newcost;
 			int no_ne = htonl(costs[nid]);
 			buf[nid] = no_ne;
-			
-			//TODO record the cost change (remember, the link might currently be down! in that case,
-			//this is the new cost you should treat it as having once it comes back up.)
-			// ...
 		}
 		
-
-		//TODO now check for the various types of packets you use in your own protocol
+		//Check for the various types of packets you use in your own protocol
 		else if(!strncmp(recvBuf, "sdi", 3))
 		{
 			
 			char recvmsg[101];	
-								//printf("received hop is: %d\n",recvBuf[4]);
+													//printf("received hop is: %d\n",recvBuf[4]);
 			short int destID = recvBuf[4];
 
 			int length = copy_string(recvmsg,&recvBuf[5]);
@@ -244,13 +224,14 @@ void listenForNeighbors(char* logfilename)
 				if(sendto(globalSocketUDP, recvBuf, length+5, 0,
 				  (struct sockaddr*)&globalNodeAddrs[nexthops[destID]], sizeof(globalNodeAddrs[nexthops[destID]])) < 0){
 					perror("sendto()");
-			//		printf("my id is %d\n",globalMyID);
+					//printf("my id is %d\n",globalMyID);
 					sprintf(logLine, "unreachable dest %d\n", destID);
 					fwrite(logLine, 1, strlen(logLine), logfile);
 				}
 				else{
 					sprintf(logLine, "forward packet dest %d nexthop %d message %s\n", destID,nexthops[destID],recvmsg);
-					fwrite(logLine, 1, strlen(logLine), logfile);}
+					fwrite(logLine, 1, strlen(logLine), logfile);
+				}
 			}
 			
 		}
@@ -259,13 +240,7 @@ void listenForNeighbors(char* logfilename)
 			heardFrom = atoi(strchr(strchr(strchr(fromAddr,'.')+1,'.')+1,'.')+1);
 			
 			int i;
-		/*	if(globalisneighbor[heardFrom] == 0){
-				if(backupcostsforneighbor[heardFrom] != -1) {
-					costs[heardFrom] = backupcostsforneighbor[heardFrom];
-					nexthops[heardFrom] = nexthopsforneighbor[heardFrom];}
-				
-			}
-		*/
+
 			globalisneighbor[heardFrom] = 1;
 
 			//update default not from cost file costs
@@ -274,7 +249,6 @@ void listenForNeighbors(char* logfilename)
 				nexthops[heardFrom] = heardFrom;
 				int no_ne = htonl(costs[heardFrom]);
 				buf[heardFrom] = no_ne;
-				
 			}
 
 			for(i=0;i<256;i++){
@@ -286,11 +260,11 @@ void listenForNeighbors(char* logfilename)
 
 					//sprintf(logLine, "I am the neighbor of a node with broken link\n");
 					//fwrite(logLine, 1, strlen(logLine), logfile);
-
-			//		costs[i] = -1;
-			//		nexthops[i] = i;
-			//		int no_ne = htonl(costs[i]);
-			//		buf[i] = no_ne;
+					/*
+					costs[i] = -1;
+					nexthops[i] = i;
+					int no_ne = htonl(costs[i]);
+					buf[i] = no_ne;*/
 					//hackyBroadcastonlytoneighbors(buf, 256*4);
 				}
 
@@ -299,7 +273,6 @@ void listenForNeighbors(char* logfilename)
 
 				//update if costs[i] == 1
 				if(costs[i] == -1 && temp[i] != -1){
-					//printf("I heardfrom %d i is %d\n", heardFrom,i);
 
 					costs[i] = temp[i]+costs[heardFrom];
 					if(heardFrom != nexthops[heardFrom])	
@@ -308,7 +281,6 @@ void listenForNeighbors(char* logfilename)
 
 					int no_ne = htonl(costs[i]);
 					buf[i] = no_ne;
-			
 				}
 		
 				//find shorter path. if neighbor has cost 1, skip it.
@@ -322,7 +294,6 @@ void listenForNeighbors(char* logfilename)
 
 				//breaking tie
 				else if(costs[i] != -1 && costs[i] == temp[i]+costs[heardFrom] && temp[i] != -1){			
-					//printf("I also reached 3\n");
 					if(nexthops[i] > heardFrom)			
 					{		
 						nexthops[i] = heardFrom;
@@ -332,13 +303,10 @@ void listenForNeighbors(char* logfilename)
 			}
 			
 			//record that we heard from heardFrom just now.
-
 			gettimeofday(&globalLastHeartbeat[heardFrom], 0);
 		}
 
 		fflush(logfile);
-
-		  
 	}
 	//(should never reach here)
 	close(globalSocketUDP);
