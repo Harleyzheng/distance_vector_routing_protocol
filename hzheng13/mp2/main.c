@@ -95,7 +95,6 @@ int main(int argc, char** argv)
 
   	fclose(costfile);    
 
-
 	//socket() and bind() our socket. We will do all sendto()ing and recvfrom()ing on this one.
 	if((globalSocketUDP=socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	{
@@ -128,19 +127,11 @@ int main(int argc, char** argv)
 
 	logfile = fopen(argv[3], "w+");
 
-	
-
-	//start threads... feel free to add your own, and to remove the provided ones.
 	pthread_t announcerThread;
 	pthread_create(&announcerThread, 0, announceToNeighbors, (void*)0);
-//	pthread_t neighboraliveThread;
-//	pthread_create(&neighboraliveThread, 0, neighborStillAlive, (void*)0);
-	
 	
 	//good luck, have fun!
 	listenForNeighbors(argv[3]);
-	
-	
 	
 }
 
